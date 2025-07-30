@@ -6,3 +6,9 @@ Inspired from [fast-linkedin-scraper](https://github.com/stickerdaniel/fast-link
 
 ## How to use
 Checkout the [tests](tests) directory.
+
+
+## Demo
+Short demo running this [test script](tests/demo_scraper.py).
+![Alt Text](https://github.com/ancillabs/scrapedin/raw/main/demo.gif)
+
