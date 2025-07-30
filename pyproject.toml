@@ -1,0 +1,19 @@
+[project]
+name = "scrapedin"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Sadjy", email = "sadjy.sadjan@protonmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "dotenv>=0.9.9",
+    "playwright>=1.54.0",
+    "pydantic>=2.11.7",
+    "rapidfuzz>=3.13.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9"]
+build-backend = "uv_build"
