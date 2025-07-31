@@ -18,7 +18,7 @@ class Job(BaseModel):
     job_function: Optional[str] = None
     industries: List[str] = Field(default_factory=list)
     posted_date: Optional[str] = None
-    num_applicants: Optional[int] = Field(None, ge=0)
+    num_applicants: Optional[int] = Field(default=None, ge=0)
 
 
 class JobSearch(BaseModel):
@@ -27,4 +27,6 @@ class JobSearch(BaseModel):
     search_query: Optional[str] = None
     location: Optional[str] = None
     jobs: List[Job] = Field(default_factory=list)
-    total_results: Optional[int] = Field(None, ge=0)
+    total_results: Optional[int] = Field(default=None, ge=0)
+
+

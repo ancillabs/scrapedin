@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 
 from dotenv import load_dotenv
 
@@ -36,7 +35,7 @@ def get_jobs(query: str, storage_state_path: str) -> str:
     with LinkedInSession.from_storage_state(
         storage_state_path=storage_state_path, headless=HEADLESS
     ) as session:
-        results: JobSearch = session.search_jobs(query)
+        results: JobSearch = session.search_jobs(query, date_posted_filter="month")
 
         # tests_output_dir = os.path.join("tests", OUTPUT_DIR)
         # os.makedirs(tests_output_dir, exist_ok=True)
@@ -48,17 +47,12 @@ def get_jobs(query: str, storage_state_path: str) -> str:
         #     )
 
         # return f"Profile saved to: {filename}"
-        print(
-            json.dump(
-                results.model_dump(),
-                sys.stdout,
-                indent=2,
-                default=str,
-                ensure_ascii=False,
-            )
+        return json.dumps(
+            results.model_dump(),
+            indent=2,
+            default=str,
+            ensure_ascii=False,
         )
-
-        return "OK"
 
 
 def perform_initial_login(email: str, password: str, storage_state_path: str) -> None:

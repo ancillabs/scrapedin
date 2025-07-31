@@ -38,7 +38,7 @@ class CompanyScraper:
         self,
         url: str,
         get_employees: bool = False,
-        employee_keywords: Optional[str] = None,
+        employee_keyword: Optional[str] = None,
     ) -> Company:
         """
         Scrapes a LinkedIn company profile.
@@ -46,7 +46,7 @@ class CompanyScraper:
         Args:
             url (str): The URL of the company page.
             get_employees (bool): If True, scrapes all employees.
-            employee_keywords (Optional[str]): If provided, scrapes employees matching these keywords.
+            employee_keyword (Optional[str]): If provided, scrapes employees matching these keywords.
                                                 Setting this implies get_employees=True.
         """
         linkedin_url = HttpUrl(url)
@@ -54,24 +54,31 @@ class CompanyScraper:
         self.page.wait_for_load_state("domcontentloaded")
         self.page.wait_for_timeout(2000)
 
+        # Find the base company URL to reliably build the about and people URLs.
+        base_url_match = re.search(
+            r"(https?://www\.linkedin\.com/company/[^/]+)", str(linkedin_url)
+        )
+        if not base_url_match:
+            # If the regex fails for some reason, fall back to a simpler method
+            base_url = str(linkedin_url).split("?")[0].rstrip("/")
+        else:
+            base_url = base_url_match.group(1)
+
         company_data = self._scrape_basic_info()
 
         # Navigate to the about page for more details
-        about_url = f"{str(linkedin_url).rstrip('/')}/about/"
+        about_url = f"{base_url}/about/"
         self.page.goto(about_url)
-        self.page.wait_for_load_state("domcontentloaded")
         self.page.wait_for_timeout(2000)
 
         about_data = self._scrape_about_info()
 
+        # Scrape employees if requested
         employees_data = []
-        should_get_employees = get_employees or (employee_keywords is not None)
-
-        if should_get_employees:
-            people_url = f"{str(linkedin_url).rstrip('/')}/people/"
+        if get_employees or employee_keyword:
+            people_url = f"{base_url}/people/"
             self.page.goto(people_url)
-            # Assign the returned list to employees_data
-            employees_data = scrape_employees(self.page, keywords=employee_keywords)
+            employees_data = scrape_employees(self.page, keyword=employee_keyword)
 
         # Combine and create the final Company object
         full_data = {**company_data, **about_data, "employees": employees_data}
@@ -142,5 +149,5 @@ class CompanyScraper:
         company_size_text = self._get_text("dt:has-text('Company size') + dd")
         if company_size_text:
             info["company_size"] = _parse_company_size(company_size_text)
-
+            info["company_size_text"] = company_size_text
         return info

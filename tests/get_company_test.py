@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 
 from dotenv import load_dotenv
 
@@ -37,29 +36,15 @@ def get_and_save_company_profile(name: str, storage_state_path: str) -> str:
     with LinkedInSession.from_storage_state(
         storage_state_path=storage_state_path, headless=HEADLESS
     ) as session:
-        company: Company = session.get_company(company_url, get_employees=True)
+        company: Company = session.get_company(company_url, get_employees=False)
+        # company: Company = session.get_company(company_url, get_employees=True)
 
-        # tests_output_dir = os.path.join("tests", OUTPUT_DIR)
-        # os.makedirs(tests_output_dir, exist_ok=True)
-        # filename = os.path.join(tests_output_dir, f"{name}.json")
-
-        # with open(filename, "w", encoding="utf-8") as f:
-        #     json.dump(
-        #         company.model_dump(), f, indent=2, default=str, ensure_ascii=False
-        #     )
-
-        # return f"Profile saved to: {filename}"
-        print(
-            json.dump(
-                company.model_dump(),
-                sys.stdout,
-                indent=2,
-                default=str,
-                ensure_ascii=False,
-            )
+        return json.dumps(
+            company.model_dump(),
+            indent=2,
+            default=str,
+            ensure_ascii=False,
         )
-
-        return "OK"
 
 
 def perform_initial_login(email: str, password: str, storage_state_path: str) -> None:
@@ -99,4 +84,4 @@ if __name__ == "__main__":
     if not os.path.exists(AUTH_STATE_FILE):
         perform_initial_login(email, password, AUTH_STATE_FILE)
 
-    get_and_save_company_profile(COMPANIES[0], AUTH_STATE_FILE)
+    print(get_and_save_company_profile(COMPANIES[0], AUTH_STATE_FILE))

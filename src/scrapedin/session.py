@@ -106,7 +106,7 @@ class LinkedInSession:
         self,
         url: str,
         get_employees: bool = False,
-        employee_keywords: Optional[str] = None,
+        employee_keyword: Optional[str] = None,
     ) -> Company:
         """
         Scrapes a LinkedIn company profile.
@@ -114,7 +114,7 @@ class LinkedInSession:
         Args:
             url (str): The URL of the company page to scrape.
             get_employees (bool): If True, scrapes all company employees.
-            employee_keywords (Optional[str]): If set, searches for and scrapes employees
+            employee_keyword (Optional[str]): If set, searches for and scrapes employees
                                                 matching these keywords. This can be much
                                                 faster than getting all employees.
         Returns:
@@ -125,7 +125,7 @@ class LinkedInSession:
         page: Page = self._ensure_authenticated()
         scraper = CompanyScraper(page)
         return scraper.scrape_profile(
-            url, get_employees=get_employees, employee_keywords=employee_keywords
+            url, get_employees=get_employees, employee_keyword=employee_keyword
         )
 
     def save_storage_state(self, path: str) -> None:
@@ -165,7 +165,7 @@ class LinkedInSession:
     def search_jobs(
         self,
         keywords: str,
-        location: str = "Worldwide",
+        location: Optional[str] = "Worldwide",
         date_posted_filter: Optional[str] = None,
     ) -> JobSearch:
         """

@@ -5,6 +5,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
+from pydantic import HttpUrl
 
 from scrapedin import LinkedInSession
 from scrapedin.models import Job
@@ -37,18 +38,7 @@ def get_job_details(id: str, storage_state_path: str) -> str:
     with LinkedInSession.from_storage_state(
         storage_state_path=storage_state_path, headless=HEADLESS
     ) as session:
-        job: Job = session.get_job(job_url)
-
-        # tests_output_dir = os.path.join("tests", OUTPUT_DIR)
-        # os.makedirs(tests_output_dir, exist_ok=True)
-        # filename = os.path.join(tests_output_dir, f"{name}.json")
-
-        # with open(filename, "w", encoding="utf-8") as f:
-        #     json.dump(
-        #         company.model_dump(), f, indent=2, default=str, ensure_ascii=False
-        #     )
-
-        # return f"Profile saved to: {filename}"
+        job: Job = session.get_job(Job(linkedin_url=HttpUrl(job_url)))
         print(
             json.dump(
                 job.model_dump(),

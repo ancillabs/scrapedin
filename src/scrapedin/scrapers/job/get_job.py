@@ -25,7 +25,10 @@ class JobScraper:
         self.page = page
 
     def search(
-        self, keywords: str, location: str, date_posted_filter: Optional[str] = None
+        self,
+        keywords: str,
+        location: Optional[str],
+        date_posted_filter: Optional[str] = None,
     ) -> List[Job]:
         """
         Scrapes job listings from LinkedIn, with filters for remote and date posted.
@@ -54,12 +57,13 @@ class JobScraper:
             ).first
             location_input.wait_for(state="visible", timeout=5000)
             location_input.clear()
-            location_input.fill(location)
+            if location:
+                location_input.fill(location)
 
             self.page.wait_for_selector(
                 selectors.JOB_SEARCH_LOCATION_SUGGESTION_LIST,
                 state="visible",
-                timeout=599000,
+                timeout=5000,
             )
             location_input.press("Enter")
 
@@ -219,10 +223,7 @@ class JobScraper:
 
         company_link_loc = self.page.locator(selectors.JOB_DETAILS_COMPANY_LINK).first
         company_name = company_link_loc.inner_text().strip()
-        company_url_raw = company_link_loc.get_attribute("href")
-        company_url = (
-            f"https://www.linkedin.com{company_url_raw}" if company_url_raw else None
-        )
+        company_url = company_link_loc.get_attribute("href")
 
         description_loc = self.page.locator(selectors.JOB_DETAILS_DESCRIPTION).first
         description = (

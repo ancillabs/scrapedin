@@ -10,14 +10,14 @@ from ...models.company import Employee
 from .. import selectors
 
 
-def scrape_employees(page: Page, keywords: Optional[str] = None) -> List[Employee]:
+def scrape_employees(page: Page, keyword: Optional[str] = None) -> List[Employee]:
     """
     Scrapes employee information from a company's 'People' page and returns a list.
-    If keywords are provided, it performs a search before scraping.
+    If keyword are provided, it performs a search before scraping.
 
     Args:
         page (Page): An authenticated Playwright page instance.
-        keywords (Optional[str]): Optional search query for employees.
+        keyword (Optional[str]): Optional search query for employees.
 
     Returns:
         List[Employee]: A list of scraped Employee objects.
@@ -26,19 +26,20 @@ def scrape_employees(page: Page, keywords: Optional[str] = None) -> List[Employe
     # Use a set for O(1) average time complexity checks for duplicates.
     scraped_employee_urls: Set[str] = set()
 
-    if keywords:
+    # LinkedIn keyword filter for employees takes a commma-seperated list, but seems to only care about the first keyword.
+    if keyword:
         try:
             search_input = page.locator(selectors.COMPANY_EMPLOYEE_SEARCH_INPUT)
             search_input.wait_for(state="visible", timeout=7000)
-            search_input.fill(keywords)
+            search_input.fill(keyword)
             search_input.press("Enter")
 
             # Wait for the URL to reflect the search query to confirm search has executed
-            encoded_keywords = urllib.parse.quote(keywords)
-            page.wait_for_url(f"**/*keywords={encoded_keywords}*", timeout=10000)
+            encoded_keyword = urllib.parse.quote(keyword)
+            page.wait_for_url(f"**/*keyword={encoded_keyword}*", timeout=10000)
 
         except PlaywrightTimeoutError:
-            print(f"Could not perform search for keywords: {keywords}")
+            print(f"Could not perform search for keyword: {keyword}")
             return scraped_employees  # Return empty list if search fails
 
     try:

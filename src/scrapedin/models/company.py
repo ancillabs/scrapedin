@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -22,6 +22,7 @@ class Company(BaseModel):
     headquarters: Optional[str] = None
     founded: Optional[int] = Field(None, ge=1800, le=2030)
     company_type: Optional[str] = None
-    company_size: Optional[Union[int, str]] = Field(None)
+    company_size: Optional[int] = Field(default=None, ge=0)
+    company_size_text: Optional[str] = None
     industry: Optional[str] = None
     employees: List[Employee] = Field(default_factory=list)
