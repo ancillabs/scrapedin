@@ -1,13 +1,15 @@
 """Job scraping module for LinkedIn."""
 
+import random
 import re
+import time
 from typing import List, Optional, Set
-from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, expect
 from pydantic import HttpUrl
 
 from ...models.job import Job
 from .. import selectors
-from ..utils import scroll_to_bottom
+from ..utils import robust_navigate, scroll_to_bottom
 
 
 class JobScraper:
@@ -43,7 +45,7 @@ class JobScraper:
 
         # Navigate to the main jobs page first for a more human-like approach
         self.page.goto("https://www.linkedin.com/jobs/")
-
+        self.page.mouse.move(random.randint(100, 500), random.randint(100, 500))
         try:
             # --- Step 1: Perform the initial search ---
             keywords_input = self.page.locator(
@@ -87,16 +89,23 @@ class JobScraper:
                 selectors.JOB_SEARCH_APPLY_FILTER_BUTTON
             ).first
             apply_button.wait_for(state="visible", timeout=3000)
-            apply_button.click()
 
+            apply_button.click(timeout=2000)
             self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+            time.sleep(1.5)  # I'm tired boss // TODO: fix race condition
 
+            # with self.page.expect_response(
+            #     "**/voyagerJobsDashJobCards**", timeout=15000
+            # ):
+            #     apply_button.click()
             if date_posted_filter:
                 date_filter_button = self.page.locator(
                     selectors.JOB_SEARCH_DATE_POSTED_FILTER_BUTTON
                 ).first
                 date_filter_button.wait_for(state="visible", timeout=3000)
-                date_filter_button.click()
+                expect(date_filter_button).to_be_enabled(timeout=10000)
+
+                date_filter_button.click(timeout=2000)
 
                 date_checkbox_selector = ""
                 if date_posted_filter == "month":
@@ -115,13 +124,13 @@ class JobScraper:
                 if date_checkbox_selector:
                     date_checkbox = self.page.locator(date_checkbox_selector).first
                     date_checkbox.wait_for(state="visible", timeout=3000)
-                    date_checkbox.click()
+                    date_checkbox.click(timeout=2000)
 
                     date_apply_button = self.page.locator(
                         selectors.JOB_SEARCH_DATE_APPLY_FILTER_BUTTON
                     ).first
                     date_apply_button.wait_for(state="visible", timeout=3000)
-                    date_apply_button.click()
+                    date_apply_button.click(timeout=2000)
 
                     self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 
@@ -138,6 +147,7 @@ class JobScraper:
             return scraped_jobs
 
         while True:
+            time.sleep(random.uniform(1.0, 7.0))
             scroll_to_bottom(self.page)
             self.page.wait_for_timeout(1000)  # Short wait for lazy-loading
 
@@ -200,12 +210,13 @@ class JobScraper:
 
         return scraped_jobs
 
-    def scrape_job_details(self, job_to_enrich: Job) -> Job:
+    def scrape_job_details(self, job_to_enrich: Job) -> Optional[Job]:
         """
         Enriches a Job object with its full details from the job's page.
         """
-        self.page.goto(str(job_to_enrich.linkedin_url))
-        self.page.wait_for_load_state("domcontentloaded")
+        robust_navigate(
+            self.page, str(job_to_enrich.linkedin_url), selectors.JOB_DETAILS_TITLE
+        )
 
         try:
             show_more_button = self.page.locator(

@@ -36,7 +36,8 @@ def scrape_employees(page: Page, keyword: Optional[str] = None) -> List[Employee
 
             # Wait for the URL to reflect the search query to confirm search has executed
             encoded_keyword = urllib.parse.quote(keyword)
-            page.wait_for_url(f"**/*keyword={encoded_keyword}*", timeout=10000)
+
+            page.wait_for_url(f"**/*keywords={encoded_keyword}*", timeout=10000)
 
         except PlaywrightTimeoutError:
             print(f"Could not perform search for keyword: {keyword}")
@@ -52,6 +53,7 @@ def scrape_employees(page: Page, keyword: Optional[str] = None) -> List[Employee
 
     while True:
         # Keep track of the employee count before scraping the current view
+        
         last_count = len(scraped_employees)
 
         page.evaluate("window.scrollTo(0, document.body.scrollHeight);")

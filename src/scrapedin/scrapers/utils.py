@@ -1,10 +1,13 @@
 """Utility functions for LinkedIn scraping operations."""
 
+import random
 import re
+import time
 from typing import Dict, Optional
 
 from playwright.sync_api import Locator, Page
 from pydantic import HttpUrl
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, Error
 
 
 def scroll_to_half(page: Page) -> None:
@@ -211,3 +214,78 @@ def validate_linkedin_url(url: str) -> Optional[HttpUrl]:
         pass
 
     return None
+
+
+def robust_navigate(page: Page, url: str, wait_for_selector: str):
+    """
+    Navigates to a URL with an intelligent retry mechanism that handles rate limiting.
+
+    Args:
+        page (Page): The Playwright page object to control.
+        url (str): The URL to navigate to.
+        wait_for_selector (str): A CSS selector to wait for to confirm the page has loaded successfully.
+    """
+    max_retries = 5
+    base_wait_time = 10
+
+    for attempt in range(max_retries):
+        try:
+            time.sleep(random.uniform(4.0, 10.0))
+            page.goto(url, wait_until="domcontentloaded")
+            page.wait_for_selector(wait_for_selector, state="visible", timeout=15000)
+            time.sleep(random.uniform(3.0, 9.0))
+            return
+        except Error as e:
+            if "net::ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
+                if attempt < max_retries - 1:
+                    wait_time = (base_wait_time ** (attempt + 1)) + random.uniform(0, 5)
+                    print(
+                        f"Rate limit detected for {url}. Waiting {wait_time:.1f}s before retry..."
+                    )
+                    time.sleep(wait_time)
+                else:
+                    print(
+                        f"Failed to load {url} after {max_retries} rate-limit retries."
+                    )
+                    raise e
+            else:  # Handle other errors like timeouts
+                if attempt < max_retries - 1:
+                    time.sleep(base_wait_time)
+                else:
+                    raise e
+
+    raise PlaywrightTimeoutError(
+        f"Failed to robustly navigate to {url} after {max_retries} attempts."
+    )
+
+
+def resilient_click(page: Page, selector: str, timeout: int = 10000):
+    """
+    Attempts to click an element, retrying until the element is stable
+    and the click action does not throw an error. This is more robust
+    than a simple wait for a specific state.
+
+    Args:
+        page (Page): The Playwright page object.
+        selector (str): The CSS selector for the element to click.
+        timeout (int): The total time in milliseconds to keep retrying.
+    """
+    start_time = time.time() * 1000
+    while True:
+        try:
+            # Locate the element fresh on each attempt
+            element = page.locator(selector).first
+            # Attempt to click. This will auto-wait for the element to be visible
+            # and attached, but might still fail if the page is re-hydrating.
+            element.click(
+                timeout=2000
+            )  # Use a short timeout for each individual click attempt
+            return  # If the click succeeds, exit the loop
+        except PlaywrightTimeoutError as e:
+            if (time.time() * 1000) > (start_time + timeout):
+                print(
+                    f"Failed to click element '{selector}' after {timeout / 1000} seconds."
+                )
+                raise e  # Re-raise the final exception
+            # Wait briefly before the next retry
+            time.sleep(0.5)

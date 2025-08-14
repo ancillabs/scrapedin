@@ -2,8 +2,8 @@
 
 from typing import Any, Dict, Optional
 from playwright.sync_api import BrowserContext, sync_playwright
-
 from ..config import BrowserConfig
+from playwright_stealth import Stealth
 
 
 class BrowserContextManager:
@@ -19,7 +19,7 @@ class BrowserContextManager:
         context_args: Optional[Dict[str, Any]] = None,
     ) -> BrowserContext:
         """Create and return browser context with standard configuration."""
-        self.playwright_context = sync_playwright()
+        self.playwright_context = Stealth().use_sync(sync_playwright())
         playwright = self.playwright_context.__enter__()
 
         # Safely handle optional arguments
@@ -46,7 +46,17 @@ class BrowserContextManager:
 
         return context
 
+    # def __exit__(self, exc_type, exc_val, exc_tb):
+    #     """Ensure browser and playwright are properly closed."""
+    #     if self.playwright_context:
+    #         self.playwright_context.__exit__(exc_type, exc_val, exc_tb)
+
+    def close(self):
+        """Public method to safely exit the Playwright context."""
+        # This method provides a clean, public way to trigger the cleanup.
+        if self.playwright_context:
+            self.playwright_context.__exit__(None, None, None)
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Ensure browser and playwright are properly closed."""
-        if self.playwright_context:
-            self.playwright_context.__exit__(exc_type, exc_val, exc_tb)
+        self.close()

@@ -107,6 +107,7 @@ class LinkedInSession:
         url: str,
         get_employees: bool = False,
         employee_keyword: Optional[str] = None,
+        employees_only: bool = False,
     ) -> Company:
         """
         Scrapes a LinkedIn company profile.
@@ -125,7 +126,10 @@ class LinkedInSession:
         page: Page = self._ensure_authenticated()
         scraper = CompanyScraper(page)
         return scraper.scrape_profile(
-            url, get_employees=get_employees, employee_keyword=employee_keyword
+            url,
+            get_employees=get_employees,
+            employee_keyword=employee_keyword,
+            employees_only=employees_only,
         )
 
     def save_storage_state(self, path: str) -> None:
@@ -146,7 +150,7 @@ class LinkedInSession:
         self._ensure_authenticated()
         self._context.storage_state(path=path)
 
-    def get_job(self, job: Job) -> Job:
+    def get_job(self, job: Job) -> Optional[Job]:
         """
         Enriches a Job object with its full details from the job's page.
 
@@ -160,7 +164,9 @@ class LinkedInSession:
 
         page: Page = self._ensure_authenticated()
         scraper = JobScraper(page)
-        return scraper.scrape_job_details(job_to_enrich=job)
+        result_job = scraper.scrape_job_details(job_to_enrich=job)
+        if result_job:
+            return result_job
 
     def search_jobs(
         self,
@@ -225,7 +231,7 @@ class LinkedInSession:
         """Close LinkedIn session and clean up browser resources."""
         self._authenticated = False
         if self._browser_session:
-            self._browser_session.__exit__(None, None, None)
+            self._browser_session.close()
             self._browser_session = None
         self._context = None
         self._page = None

@@ -1,5 +1,6 @@
 """Main person profile scraper using Playwright."""
 
+import random
 from playwright.sync_api import Page
 from pydantic import HttpUrl
 
@@ -42,7 +43,7 @@ class PersonScraper:
         # Create lists to hold scraped data
         experiences_data = []
         educations_data = []
-
+        self.page.mouse.move(random.randint(100, 500), random.randint(100, 500))
         # Scrape basic information into a dictionary
         basic_info = self._scrape_basic_info()
         self.page.wait_for_timeout(1000)  # 1 second between sections

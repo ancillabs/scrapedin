@@ -44,6 +44,7 @@ COMPANY_EMPLOYEE_SHOW_MORE_BUTTON = "button.scaffold-finite-scroll__load-button"
 COMPANY_EMPLOYEE_SEARCH_INPUT = "#people-search-keywords"
 
 # Selectors for Job Search Scraping.
+JOB_SEARCH_LIST_CONTAINER = "div.scaffold-layout__list"
 JOB_SEARCH_LIST = "div.scaffold-layout__list ul"
 JOB_SEARCH_ITEM = "li.scaffold-layout__list-item"  # Each job card
 
@@ -55,12 +56,15 @@ JOB_SEARCH_LOCATION_SUGGESTION_LIST = "div.jobs-search-box__typeahead-results--l
 JOB_SEARCH_ONSITE_REMOTE_FILTER_BUTTON = "button[aria-label='Remote filter. Clicking this button displays all Remote filter options.']"
 JOB_SEARCH_REMOTE_FILTER_CHECKBOX = "label[for='workplaceType-2']"
 JOB_SEARCH_APPLY_FILTER_BUTTON = "div[data-basic-filter-parameter-name='workplaceType'] button.artdeco-button--primary"
+JOB_SEARCH_REMOTE_APPLIED = "button[id='searchFilter_workplaceType'] > span"
 
 JOB_SEARCH_DATE_POSTED_FILTER_BUTTON = "button[id='searchFilter_timePostedRange']"
+# JOB_SEARCH_DATE_POSTED_FILTER_BUTTON = "button[aria-label='Date posted filter. Clicking this button displays all Date posted filter options.']"
 JOB_SEARCH_PAST_MONTH_FILTER_CHECKBOX = "label[for='timePostedRange-r2592000']"
 JOB_SEARCH_PAST_WEEK_FILTER_CHECKBOX = "label[for='timePostedRange-r604800']"
 JOB_SEARCH_PAST_DAY_FILTER_CHECKBOX = "label[for='timePostedRange-r86400']"
 JOB_SEARCH_DATE_APPLY_FILTER_BUTTON = "div[data-basic-filter-parameter-name='timePostedRange'] button.artdeco-button--primary"
+
 
 JOB_SEARCH_ITEM_LINK = "a.job-card-container__link"
 JOB_SEARCH_ITEM_TITLE = "div.artdeco-entity-lockup__title a span > strong"

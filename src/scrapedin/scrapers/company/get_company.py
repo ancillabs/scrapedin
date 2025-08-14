@@ -1,9 +1,13 @@
 """Main company profile scraper using Playwright."""
 
+import random
 import re
 from typing import Dict, Optional, Any
 from playwright.sync_api import Page
+
 from pydantic import HttpUrl
+
+from scrapedin.scrapers.utils import robust_navigate
 
 from ...models.company import Company
 from .. import selectors
@@ -39,6 +43,7 @@ class CompanyScraper:
         url: str,
         get_employees: bool = False,
         employee_keyword: Optional[str] = None,
+        employees_only: bool = False,
     ) -> Company:
         """
         Scrapes a LinkedIn company profile.
@@ -49,40 +54,64 @@ class CompanyScraper:
             employee_keyword (Optional[str]): If provided, scrapes employees matching these keywords.
                                                 Setting this implies get_employees=True.
         """
-        linkedin_url = HttpUrl(url)
-        self.page.goto(str(linkedin_url))
-        self.page.wait_for_load_state("domcontentloaded")
-        self.page.wait_for_timeout(2000)
+        robust_navigate(self.page, url, selectors.COMPANY_NAME)
 
-        # Find the base company URL to reliably build the about and people URLs.
+        # linkedin_url = HttpUrl(url)
+        # self.page.goto(str(linkedin_url))
+        # self.page.wait_for_load_state("domcontentloaded")
+        # self.page.wait_for_selector(
+        #     selectors.COMPANY_NAME, state="visible", timeout=10000
+        # )
+        # self.page.wait_for_timeout(2000)
+
+        current_url = self.page.url
         base_url_match = re.search(
-            r"(https?://www\.linkedin\.com/company/[^/]+)", str(linkedin_url)
+            r"(https?://www\.linkedin\.com/company/[^/]+)", current_url
+        )
+        base_url = (
+            base_url_match.group(1)
+            if base_url_match
+            else current_url.split("?")[0].rstrip("/")
         )
         if not base_url_match:
             # If the regex fails for some reason, fall back to a simpler method
-            base_url = str(linkedin_url).split("?")[0].rstrip("/")
+            base_url = url.split("?")[0].rstrip("/")
         else:
             base_url = base_url_match.group(1)
 
-        company_data = self._scrape_basic_info()
+        company_data = {}
+        about_data = {}
 
-        # Navigate to the about page for more details
-        about_url = f"{base_url}/about/"
-        self.page.goto(about_url)
-        self.page.wait_for_timeout(2000)
+        if not employees_only:
+            company_data = self._scrape_basic_info()
 
-        about_data = self._scrape_about_info()
+            self.page.mouse.move(random.randint(100, 500), random.randint(100, 500))
+
+            # Navigate to the about page for more details
+            about_url = f"{base_url}/about/"
+            robust_navigate(
+                self.page,
+                about_url,
+                "div section.org-page-details-module__card-spacing",
+            )
+            # self.page.goto(about_url)
+            self.page.wait_for_timeout(2000)
+
+            about_data = self._scrape_about_info()
 
         # Scrape employees if requested
         employees_data = []
         if get_employees or employee_keyword:
             people_url = f"{base_url}/people/"
-            self.page.goto(people_url)
+            # self.page.goto(people_url)
+            robust_navigate(
+                self.page, people_url, selectors.COMPANY_EMPLOYEE_LIST_CONTAINER
+            )
             employees_data = scrape_employees(self.page, keyword=employee_keyword)
 
         # Combine and create the final Company object
         full_data = {**company_data, **about_data, "employees": employees_data}
-        company = Company(linkedin_url=linkedin_url, **full_data)
+        company = Company(linkedin_url=HttpUrl(base_url), **full_data)
 
         return company
 

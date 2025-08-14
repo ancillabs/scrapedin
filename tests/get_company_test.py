@@ -14,7 +14,7 @@ load_dotenv()
 HEADLESS = False
 OUTPUT_DIR = "output"
 AUTH_STATE_FILE = "auth_state.json"
-COMPANIES = ["ollama", "llamaindex"]
+COMPANIES = ["unicast-ai", "llamaindex"]
 
 
 def get_and_save_company_profile(name: str, storage_state_path: str) -> str:
@@ -36,8 +36,10 @@ def get_and_save_company_profile(name: str, storage_state_path: str) -> str:
     with LinkedInSession.from_storage_state(
         storage_state_path=storage_state_path, headless=HEADLESS
     ) as session:
-        company: Company = session.get_company(company_url, get_employees=False)
-        # company: Company = session.get_company(company_url, get_employees=True)
+        # company: Company = session.get_company(company_url, get_employees=False)
+        company: Company = session.get_company(
+            company_url, get_employees=True, employee_keyword="CEO"
+        )
 
         return json.dumps(
             company.model_dump(),
